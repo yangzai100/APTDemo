@@ -2,6 +2,7 @@ package com.example.apt_processor;
 
 import com.example.apt_annotation.SensorsDataBindView;
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.JavaFile;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -111,18 +112,26 @@ public class SensorsDataBindViewProcessor  extends AbstractProcessor {
         //创建java文件
         for (String s : mClassCreatorFactoryMap.keySet()) {
             SensorsDataClassCreateFactory proxyInfo = mClassCreatorFactoryMap.get(s);
-            try {
-                //todo  xiecuolecreateSourceFile  写成了createClassFile
-                JavaFileObject jfo = processingEnv.getFiler().createSourceFile(proxyInfo.getProxyClassFullName(), proxyInfo.getTypeElement());
+//            try {
+//                //todo  xiecuolecreateSourceFile  写成了createClassFile
+//                JavaFileObject jfo = processingEnv.getFiler().createSourceFile(proxyInfo.getProxyClassFullName(), proxyInfo.getTypeElement());
+//
+//                Writer writer = jfo.openWriter();
+//                writer.write(proxyInfo.generateJavaCode());
+//                writer.flush();
+//                writer.close();
+//                System.out.println("JavaFileObject : ");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                System.out.println("IOException : ");
+//            }
 
-                Writer writer = jfo.openWriter();
-                writer.write(proxyInfo.generateJavaCode());
-                writer.flush();
-                writer.close();
-                System.out.println("JavaFileObject : ");
+            //javapoet
+            JavaFile javaFile = JavaFile.builder(proxyInfo.getPackageName(), proxyInfo.generateJavaCodeWithJavaPoet()).build();
+            try {
+                javaFile.writeTo(processingEnv.getFiler());
             } catch (IOException e) {
                 e.printStackTrace();
-                System.out.println("IOException : ");
             }
 
         }

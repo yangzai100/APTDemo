@@ -1,8 +1,13 @@
 package com.example.apt_processor;
 
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -30,41 +35,6 @@ public class SensorsDataClassCreateFactory {
     /**
      * 创建java代码
      */
-
-//    public String generateJavaCode(){
-//        System.out.println("generateJavaCode : ");
-//        StringBuffer buffer = new StringBuffer();
-//        buffer.append("/**\n"+"* Auto Create by SensorsData APT\n");
-//        buffer.append("*/\n");
-//        buffer.append("package ").append(mPackageName).append(";\n");
-//        buffer.append("\n");
-//        buffer.append("public class ").append(mBindingClassName);
-//        buffer.append("{\n");
-//        generateBindViewMethods(buffer);
-//        buffer.append("\n");
-//        buffer.append("}\n");
-//        return buffer.toString();
-//    }
-//
-//    private void generateBindViewMethods(StringBuffer buffer){
-//        buffer.append("\tpublic void bindView(");
-//        buffer.append(mTypeElement.getQualifiedName());
-//        buffer.append(" owner ) {\n");
-//        for (Integer integer : mVariableElementMap.keySet()) {
-//            VariableElement variableElement = mVariableElementMap.get(integer);
-//            String viewType = variableElement.asType().toString();
-//            String viewName = variableElement.getSimpleName().toString();
-//            buffer.append("\t\towner.");
-//            buffer.append(viewName)
-//                    .append("  = ")
-//                    .append("(")
-//                    .append(viewType)
-//                    .append(")(((android.app.Activity)owner).findViewById( ")
-//                    .append(integer)
-//                    .append("));\n");
-//        }
-//        buffer.append(" }\n");
-//    }
 
     public String generateJavaCode() {
         StringBuilder builder = new StringBuilder();
@@ -105,6 +75,36 @@ public class SensorsDataClassCreateFactory {
             builder.append("));\n");
         }
         builder.append("  }\n");
+    }
+
+    public TypeSpec generateJavaCodeWithJavaPoet(){
+        TypeSpec bindingClass = TypeSpec.classBuilder(mBindingClassName)
+                .addModifiers(Modifier.PUBLIC)
+                .addMethod(generateMethodsWithJavaPoet())
+                .build();
+
+        return  bindingClass;
+    }
+
+    public MethodSpec generateMethodsWithJavaPoet(){
+        ClassName owner = ClassName.bestGuess(mTypeElement.getQualifiedName().toString());
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder("bindView")
+        .addModifiers(Modifier.PUBLIC)
+                .returns(void.class)
+                .addParameter(owner,"owner");
+
+        for (Integer integer : mVariableElementMap.keySet()) {
+            VariableElement variableElement = mVariableElementMap.get(integer);
+            String viewName = variableElement.getSimpleName().toString();
+            String viewType = variableElement.asType().toString();
+            methodBuilder.addCode("owner."+viewName+ " = "+"("+viewType+")(((android.app.Activity)owner).findViewById("+integer
+                    +"));");
+        }
+        return methodBuilder.build();
+    }
+
+    public String getPackageName() {
+        return mPackageName;
     }
 
     public String getProxyClassFullName(){
